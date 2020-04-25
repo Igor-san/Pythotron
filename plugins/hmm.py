@@ -23,7 +23,7 @@ class HMM(QWidget):
         # Connect the trigger signal to a slot.
         self.db.databaseOpened[str].connect(self.onDatabaseOpened)
         self.db.databaseClosed[str].connect(self.onDatabaseClosed)
-        self.db.databaseClosed[str].connect(self.onDatabaseUpdated)
+        self.db.databaseUpdated[str].connect(self.onDatabaseUpdated)
 
         self.widget.pushButtonPredict.clicked.connect(self.onPredictClick)
         self.widget.comboBoxCovarianceType.addItems(["tied", "spherical", "diag", "full"])
@@ -69,7 +69,7 @@ class HMM(QWidget):
         """ Расчет Hidden Markov Models"""
         """ подготовим выбранные тиражи"""
         start = time.time()
-        print("Начинаем считать в ", start)
+        print("Начинаем считать в ", datetime.datetime.fromtimestamp(start).strftime("%d-%m-%y %H:%M:%S"))
         fromDraw= self.widget.spinBoxFromDraw.value()
         toDraw= self.widget.spinBoxToDraw.value()
 
@@ -84,15 +84,6 @@ class HMM(QWidget):
         predictCount=self.widget.spinBoxPredictCount.value()
 
         draws=self.db.get_draws_balls_numpy(fromDraw,toDraw)
-        """
-        print("\n-полностью-\n")
-        print(draws)
-        print(draws.shape)
-        print("\n-основные-\n")
-        print(draws[:,0:self.db.lottery_config.NumberOfBalls1])
-        print("\n-Дополнительные-\n")
-        print(draws[:,self.db.lottery_config.NumberOfBalls1:])
-        """
 
         if draws.size == 0:
             QMessageBox.warning(self, 'Предупреждение', "Обучающих примеров нет", QMessageBox.Cancel )
@@ -105,13 +96,6 @@ class HMM(QWidget):
         if checkDraws.size == 0:
             QMessageBox.warning(self, 'Предупреждение', "Проверочных примеров нет", QMessageBox.Cancel )
             return
-        #for draw in draws:
-            #np.add(data, draw)
-        #print("\n---\n")
-        #data=np.array(draws,dtype=int) #,dtype=float) из массива питона в нампи
-        #print(data)
-        #self.printDraws(draws)
-        #for draw in draws:
         # Create a Gaussian HMM 
         
         num_components = 7
@@ -142,22 +126,16 @@ class HMM(QWidget):
                 print('\nHidden state', i+1)
                 print('Mean =', round(hmm.means_[i][0], 2))
                 print('Variance =', round(np.diag(hmm.covars_[i])[0], 2))
-            #print("\n---\n")
-            #print(hmm.means_)
-            #print(hmm.transmat_)
-            #print(hmm.predict(draws))
             print("\n-Generate data using the HMM model-\n")
             # Generate data using the HMM model
             predicted_data, _ = hmm.sample(predictCount) 
+
             predicted_data=np.array(predicted_data,dtype=int) #преобразуем в int
-            #print(predicted_data)
-            #print("\n-сравниваем-\n")
-            #coins=compareDraws(checkDraws,predicted_data)
-            #print(coins)
+            print('predicted_data:', predicted_data,", type/shape/ndim ", type(predicted_data),predicted_data.shape,predicted_data.ndim)
 
             self.print_results(predicted_data,checkDraws)
             end = time.time()
-            print("\n затрачено ",end - start)
+            print("затрачено: ",time.strftime('%H:%M:%S', time.gmtime(end - start))) 
         except Exception as e:
             print('HMM:HmmCalculate error: ', e)
             dbg_except()
@@ -166,6 +144,7 @@ class HMM(QWidget):
 
     def print_results(self, draws,checkDraws):
         """ выводим прогноз и сравниваем с реальностью"""
+        #print('draws:', draws,", type/shape/ndim ", type(draws),draws.shape,draws.ndim)
         self.widget.plainTextEdit.setPlainText('Прогноз')
         for draw in draws:
             if self.db.lottery_config.NumberOfBalls2==0: #если нет дополнительных

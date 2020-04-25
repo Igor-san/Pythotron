@@ -1,8 +1,12 @@
+#-------
+# pip install beautifulsoup4
+# pip install lxml
+#--------------
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.uic import loadUi 
 from PyQt5.QtWidgets import QWidget,QDialog, QApplication, QHBoxLayout
 from PyQt5.QtCore import Qt
-#from PyQt5 import QtTest
 
 import sys
 import csv
@@ -27,11 +31,8 @@ class DataImport(QDialog):
         self.widget = loadUi('dataimport\\euromillions.ui', self)
         self.db=database
         self.stop_progress=False
-        self.updated = 0 # сколько обновлено тиражей
+        self.added = 0 # сколько обновлено тиражей
         # Connect the trigger signal to a slot.
-        self.db.databaseOpened[str].connect(self.onDatabaseOpened)
-        self.db.databaseClosed[str].connect(self.onDatabaseClosed)
-        self.db.databaseClosed[str].connect(self.onDatabaseUpdated)
         self.widget.pushButtonUpdate.clicked.connect(self.onUpdateClick)
         self.widget.pushButtonDiscoverLast.clicked.connect(self.onDiscoverLastClick)
         self.widget.pushButtonStop.clicked.connect(self.onButtonStopClick)
@@ -42,24 +43,11 @@ class DataImport(QDialog):
 
     @QtCore.pyqtSlot(name='onButtonCloseClick')
     def buttonCloseClick(self):
-        #self.widget.done(self.updated)
         self.widget.accept()
 
     @QtCore.pyqtSlot(name='onButtonStopClick')
     def buttonStopClick(self):
         self.stop_progress=True
-
-    @QtCore.pyqtSlot(str, name='onDatabaseOpened')
-    def databaseOpened(self,name):
-        pass
-
-    @QtCore.pyqtSlot(str, name='onDatabaseClosed')
-    def databaseClosed(self,name):
-        pass
-
-    @QtCore.pyqtSlot(str, name='onDatabaseUpdated')
-    def databaseUpdated(self,name):
-        pass
 
     @QtCore.pyqtSlot(name='onDiscoverLastClick')
     def discoverLastClick(self):
@@ -181,8 +169,8 @@ class DataImport(QDialog):
                     if not self.db.add_draw(draw):
                         self.error_message(f"Не удалось записать тираж № {draw.draw_number}:{self.db.last_error}")
                         return False
-                    self.updated+=1
-                    self.widget.progressBar.setValue(self.updated)
+                    self.added+=1
+                    self.widget.progressBar.setValue(self.added)
                 pass # end save to db
 
             self.widget.progressBar.setValue(0)

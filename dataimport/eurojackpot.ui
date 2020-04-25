@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogMain</class>
+ <widget class="QDialog" name="DialogMain">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>418</width>
+    <height>264</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>500</width>
+    <height>500</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Обновление Евроджекпота</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>400</width>
+        <height>70</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>398</width>
+         <height>68</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <widget class="QPushButton" name="pushButtonUpdate">
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>10</y>
+          <width>75</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Обновить</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>9</x>
+          <y>9</y>
+          <width>16</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>от:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>10</y>
+          <width>17</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>до:</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButtonDiscoverLast">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>10</y>
+          <width>21</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>узнать последний номер на сайте</string>
+        </property>
+        <property name="text">
+         <string>?</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBoxToDate">
+        <property name="geometry">
+         <rect>
+          <x>170</x>
+          <y>10</y>
+          <width>91</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBoxFromDate">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>10</y>
+          <width>91</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+     <widget class="QFrame" name="frameBottom">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <property name="lineWidth">
+       <number>0</number>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMinimumSize</enum>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="pushButtonStop">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButtonClose">
+         <property name="text">
+          <string>Close</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

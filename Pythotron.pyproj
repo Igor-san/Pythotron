@@ -41,6 +41,9 @@
     <Compile Include="classes\unixdatedelegate.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="dataimport\eurojackpot.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="dataimport\euromillions.py">
       <SubType>Code</SubType>
     </Compile>
@@ -54,13 +57,10 @@
     <Compile Include="plugins\hmm.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="plugins\neurotron.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="plugins\rngform.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="mainwindow.py" />
+    <Compile Include="plugins\kerasnet.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Pythotron.py" />
   </ItemGroup>
   <ItemGroup>

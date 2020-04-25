@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
 
     def open_test_file(self):
         #self.open_file(self.default_open_dir+"/4x20.ntr")
-        self.open_file(self.default_open_dir+"/euromillions.sqlite")
+        self.open_file(self.default_open_dir+"/eurojackpot.sqlite")
 
     def closeEvent(self, event):
         """ случается при попытке закрыть виджет"""
@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
             form=module.DataImport(self,self.database)
             #form.show()
             form.exec_()
-            if form.updated>0: #обновлено больше 0 тиражей нужно грид обновить
+            if form.added>0: #обновлено больше 0 тиражей нужно грид обновить
                 self.database.update_history_view()
            
 
@@ -133,7 +133,7 @@ class MainWindow(QMainWindow):
         self.create_menus()
         self.create_tool_bars()
         self.create_status_bar()
-        self.setup_plugins()
+        self.create_plugins()
 
         self.setGeometry(50, 50, 900, 500)
         #self.setFixedSize(self.size())
@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
 
         self.show()
 
-    def setup_plugins(self):
+    def create_plugins(self):
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         plugins_directory_path = os.path.join(SCRIPT_DIR, 'plugins')
         plugins = import_plugins(self.database, plugins_directory_path)
@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
         for plugin in plugins:
            lasIndex= self.placeHolder.addForm(plugin)
 
-        self.placeHolder.setCurrentIndex(0)    
+        self.placeHolder.setCurrentIndex(1)    
 
     def create_actions(self):
         for i in range(MainWindow.MaxRecentFiles):

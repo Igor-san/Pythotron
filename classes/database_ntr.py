@@ -3,24 +3,12 @@
 """
 
 import os
-import locale
 import datetime
 
 from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtWidgets import QApplication
 
 from classes.common import *
-
-_locale_radix = locale.localeconv()['decimal_point']
-
-def string_to_float(value):
-    '''
-    Преобразуем флоат из строки NTR в float так как у меня , а в англоинтерфейсе используется.
-
-    '''
-    if _locale_radix != ',':
-        value = value.replace(",", _locale_radix)
-    return float(value)
 
 class NtrDb:
     """

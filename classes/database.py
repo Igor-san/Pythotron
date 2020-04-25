@@ -66,6 +66,7 @@ class Db(QObject): #QObject а не object для pyqtSignal
         self.__initialized_history_model()
 
         self.insert_history_sql=self.__prepare_history_insert_sql() # подготовим строку запроса на будущее
+        self.insert_prizes_sql=self.__prepare_prizes_insert_sql() # подготовим строку запроса на будущее
         # эмитируем сигнал открытия
         self.databaseOpened.emit(self.path)
         self.isClosed = False
@@ -106,6 +107,29 @@ class Db(QObject): #QObject а не object для pyqtSignal
             print('__prepare_history_insert_sql error: ', e)
             return ''
         pass #end __prepare_history_insert_sql
+
+    def __prepare_prizes_insert_sql(self):
+        """ Подготовим строку для вставки нового тиража
+
+        """
+        try:
+            str_list_insert = ['INSERT INTO [Prizes] ([DrawId]']
+
+            for i in range(len(self.lottery_config.WinCategoriesPrizesArray)):
+                str_list_insert.append(f',[{self.lottery_config.WinCategoriesPrizesArray[i]}]')
+
+            str_list_insert.append(') VALUES (:DrawId')
+
+            for i in range(len(self.lottery_config.WinCategoriesPrizesArray)):
+                str_list_insert.append(f',:{self.lottery_config.WinCategoriesPrizesArray[i]}')
+
+            str_list_insert.append(')')
+
+            return ''.join(str_list_insert)
+        except Exception as e:
+            print('__prepare_prizes_insert_sql error: ', e)
+            return ''
+        pass #end __prepare_prizes_insert_sql
 
     def __get_limit_values(self):
         """определяем первые и конечные тиражи"""
@@ -173,6 +197,7 @@ class Db(QObject): #QObject а не object для pyqtSignal
         """
         try:
             self.last_error=''
+            #History
             query = QSqlQuery()
             query.prepare(self.insert_history_sql)
             query.bindValue(":DrawNumber", draw.draw_number)
@@ -186,10 +211,27 @@ class Db(QObject): #QObject а не object для pyqtSignal
             for i in range(self.lottery_config.NumberOfBalls2):
                 query.bindValue(":S"+str(i+1), draw.balls2[i])
                 pass
-    
+
+            result=query.exec_()
+            if not result:
+                return false
+
+            #Prizes а теперь выигрыши если есть
+            if draw.wins:
+                last_insert_id =query.lastInsertId();
+                query = QSqlQuery()
+                query.prepare(self.insert_prizes_sql)
+                query.bindValue(":DrawId", last_insert_id)
+                for i in range(len(self.lottery_config.WinCategoriesPrizesArray)):
+                    newkey=self.lottery_config.WinCategoriesPrizesArray[i].replace('WP',"").replace('S','+')  #удалим WP и заменим S на +
+                    query.bindValue(f':{self.lottery_config.WinCategoriesPrizesArray[i]}', draw.wins.get(newkey,0.0))
+                result=query.exec_()
+                pass
+
             # эмитируем сигнал 
             self.databaseUpdated.emit(self.path)
-            return query.exec_()
+
+            return result
 
         except Exception as e:
             self.last_error=printf('update_draws error: ', e)
@@ -208,12 +250,15 @@ class Db(QObject): #QObject а не object для pyqtSignal
             self.StartOfBalls2=0
             self.EndOfBalls2=0
             self.DataImportPlugin='' #имя файла без расширения .py
-
+            self.WinCategories=''
+            self.DefaultWinCost=''
+            
             """ это вспомогательное - вычисляется"""
             self.LastDrawNumber=0
             self.LastDrawDate=datetime.date.min
             self.FirstDrawNumber=0
             self.FirstDrawDate=datetime.date.min
+            self.WinCategoriesPrizesArray=[]
 
             pass #end __init__
 
@@ -226,3 +271,18 @@ class Db(QObject): #QObject а не object для pyqtSignal
             elif key.lower() == 'EndOfBalls1'.lower(): self.EndOfBalls1=int(value)
             elif key.lower() == 'EndOfBalls2'.lower(): self.EndOfBalls2=int(value)
             elif key.lower() == 'DataImportPlugin'.lower(): self.DataImportPlugin=str(value)
+            elif key.lower() == 'WinCategories'.lower():
+               self.WinCategories=str(value)
+               self._prepare_prizes_array()
+            elif key.lower() == 'DefaultWinCost'.lower(): self.DefaultWinCost=str(value)     
+            
+        def _prepare_prizes_array(self):
+            """из 4+1,5,...,8,8+1 сделать список['WP4S1,WP5,...WP8,WP8S1']  """
+            arr=self.WinCategories.split(',')
+            self.WinCategoriesPrizesArray.clear()
+            for line in arr:
+                line='WP'+line.replace('+','S')
+                self.WinCategoriesPrizesArray.append(line)
+            pass
+
+   

@@ -1,4 +1,11 @@
-import traceback, sys, os, string
+import traceback
+import sys
+import os
+import string
+import datetime
+import locale
+from dateutil import rrule
+
 
 ORGANIZATION_NAME = 'HomeSoft'
 ORGANIZATION_DOMAIN = 'homesoft.ru'
@@ -22,6 +29,8 @@ OPTIONS_END='[Options End]'
 GAME_DATA_START='[Game Data Start]'
 GAME_DATA_END  = '[Game Data End]'
 
+_locale_radix = locale.localeconv()['decimal_point']
+
 class MyException(Exception):
     def __init__(self, message):
         self.message = message
@@ -37,6 +46,32 @@ def dbg_except():
 def printf(*args):
     """ аналог print но возвращает строку"""
     return ''.join(map(str, args)) 
+
+
+def string_to_float(value):
+    '''
+    Универсальное преобразование, меняем и . и , в системный десятичный разделитель. Но разделителей разряда быть не должно
+
+    '''
+
+    value = value.replace(".", _locale_radix)
+    value = value.replace(",", _locale_radix)
+    return float(value)
+
+def string_to_float_old(value):
+    '''
+    Преобразуем флоат из строки NTR в float так как у меня , а в англоинтерфейсе используется.
+
+    '''
+
+    if _locale_radix != ',':
+        value = value.replace(",", _locale_radix)
+    return float(value)
+
+def weeks_between(start_date, end_date):
+    """ количестве недель между датами"""
+    weeks = rrule.rrule(rrule.WEEKLY, dtstart=start_date, until=end_date)
+    return weeks.count()
 
 def compare_balls(balls1,balls2):
     """ сравним два массива c шарами на количество совпадений

@@ -7,6 +7,7 @@ class DrawResult:
         self.draw_date =datetime.date.min
         self.balls1 = []
         self.balls2 = []
+        self.wins = {} #2+1:7,2$ ...  3:10$ 5:10000000$ призовая категория:выигрыш
 
     def __str__(self):
         str_list = []
