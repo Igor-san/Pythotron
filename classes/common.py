@@ -6,29 +6,6 @@ import datetime
 import locale
 from dateutil import rrule
 
-
-ORGANIZATION_NAME = 'HomeSoft'
-ORGANIZATION_DOMAIN = 'homesoft.ru'
-APPLICATION_NAME = 'Pythotron'
-FILES_TYPES ="Sqlite (*.sqlite *.db);;Lottoball (*.ntr);;All files (*.*)"
-
-DATABASES_FOLDER='databases' #где базы
-DATAIMPORT_FOLDER='dataimport' #где плагины обновления
-
-DRAWNUMBER_COLUMN_INDEX=1
-UNIXTIME_COLUMN_INDEX=2 #индекс столбца с датой в history
-
-EUROJACKPOT_PLAY_URL='https://bit.ly/3a29Nxt'
-EUROMILLIONS_PLAY_URL='https://bit.ly/2V2UvEu'
-LOTTERY_PLAY_URL='https://bit.ly/2yUPK7p'
-
-HELP_URL='https://upad.ru/viewtopic.php?f=20&t=5132'#сслыка на тему в форуме
-
-OPTIONS_START='[Options Start]'
-OPTIONS_END='[Options End]'
-GAME_DATA_START='[Game Data Start]'
-GAME_DATA_END  = '[Game Data End]'
-
 _locale_radix = locale.localeconv()['decimal_point']
 
 class MyException(Exception):
@@ -97,10 +74,15 @@ def openurl(url):
     except OSError:
             print ('Пожалуйста, откройте адрес в браузере: '+url)
 
-def compare_balls_detail(balls1,balls2):
+def compare_balls_detail(balls1,balls2, by_position=False):
     """ сравним два массива c шарами на количество совпадений и отображение самих совпадений
     balls1 и balls1 одномерные массивы шаров тиража,например [3,15,36,44] и [2,33,12,11]!
+    Если задано by_position - то по позициям
+    Возвращаем кортеж {число совпадений,какие номера совпали}
     """
+    if by_position:
+        return __compare_balls_detail_pos(balls1,balls2)
+
     coins=0
     detail=''
     for ball1 in balls1:
@@ -109,24 +91,52 @@ def compare_balls_detail(balls1,balls2):
                 coins+= 1
                 detail+=str(ball1)+' '
 
-    return (str(coins)+':'+detail)
+    return (coins,detail)
        
     pass #compare_balls_detail
 
-def compare_draws(balls_array1,balls_array2):
+def __compare_balls_detail_pos(balls1,balls2):
+    """ сравним два массива c шарами на количество совпадений и отображение самих совпадений ПО ПОЗИЦИЯМ
+    balls1 и balls1 одномерные массивы шаров тиража,например [0,1,1,2] и [0,0,1,1]!
+    Возвращаем кортеж {число совпадений,какие номера совпали}
+    """
+    coins=0
+    detail=''
+    min_len=min(len(balls1), len(balls2))
+    for i in range(min_len):
+        if balls1[i]==balls2[i]:
+            coins+= 1
+            detail+=str(balls1[i])+' '
+
+    return (coins,detail)
+       
+    pass #compare_balls_detail_pos
+
+def compare_draws(balls_array1,balls_array2, by_position=False):
     """ сравним два массива c шарами на количество совпадений
     balls_array1 и balls_array2 двумерные массивы шаров тиража, а не отдельный тираж!
     """
     coins=[]
-    for balls1 in balls_array1:
-        for balls2 in balls_array2:
-            one_coin=0
-            for ball1 in balls1:
-                for ball2 in balls2:
-                    if ball1==ball2:one_coin+= 1
+    if by_position:
+        for balls1 in balls_array1:
+            len1=len(balls1)
+            for balls2 in balls_array2:
+                len2=len(balls2)
+                min_len=min(len1, len2)
+                one_coin=0
+                for i in range(min_len):
+                    if balls1[i]==balls2[i]:one_coin+= 1
+                
+                coins.append(one_coin)
+    else:
+        for balls1 in balls_array1:
+            for balls2 in balls_array2:
+                one_coin=0
+                for ball1 in balls1:
+                    for ball2 in balls2:
+                        if ball1==ball2:one_coin+= 1
                         
-            coins.append(one_coin)
+                coins.append(one_coin)
     return coins
-
        
     pass #compare_draws

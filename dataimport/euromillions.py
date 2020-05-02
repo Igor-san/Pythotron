@@ -43,7 +43,8 @@ class DataImport(QDialog):
 
     @QtCore.pyqtSlot(name='onButtonCloseClick')
     def buttonCloseClick(self):
-        self.widget.accept()
+        #self.widget.accept()
+        self.accept()
 
     @QtCore.pyqtSlot(name='onButtonStopClick')
     def buttonStopClick(self):
@@ -66,6 +67,11 @@ class DataImport(QDialog):
         finally:
             self.widget.pushButtonUpdate.setEnabled(True)
         pass #end updateClick
+
+    def show_form(self):
+        """ Для открытия диалога """
+        self.exec_()
+        pass
 
     def status_message(self,*args):
         self.widget.plainTextEdit.appendPlainText("status:"+''.join(map(str, args)) )

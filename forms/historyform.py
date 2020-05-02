@@ -1,12 +1,13 @@
 import sys
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.uic import loadUi 
-from PyQt5.QtWidgets import QWidget, QApplication, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QApplication, QHBoxLayout, QAbstractItemView
 from PyQt5.QtCore import Qt
 #from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from pathlib import Path
 
 from classes.common import *
+from classes.constants import *
 from classes.unixdatedelegate import UnixDateDelegate
 
 class HistoryForm(QWidget):
@@ -42,10 +43,12 @@ class HistoryForm(QWidget):
 
     def __prepareViewConfig(self):
         self.widget.tableViewConfig.setModel(self.db.configmodel)
+        self.widget.tableViewConfig.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def __prepareViewHistory(self):
        
         self.widget.tableViewHistory.setModel(self.db.historymodel)
+        self.widget.tableViewHistory.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.widget.tableViewHistory.setSortingEnabled(True)
         self.widget.tableViewHistory.sortByColumn(1,Qt.DescendingOrder)
 
@@ -63,8 +66,14 @@ class HistoryForm(QWidget):
             self.widget.tableViewHistory.setColumnWidth(step,30)
             step+=1
 
+        if self.db.lottery_config.IsFonbet:
+            self.widget.tableViewHistory.setColumnWidth(FONBETID_COLUMN_INDEX,45)
+            self.widget.tableViewHistory.setColumnWidth(UNIXTIME_COLUMN_INDEX,90)
+            headerView = self.widget.tableViewHistory.horizontalHeader()
+            headerView.moveSection(FONBETID_COLUMN_INDEX,UNIXTIME_COLUMN_INDEX+1)
+
         #if not self.db.IsNtr: #в НТР у нас обычные даты - но тогда сортировка не так работает по дате
-        self.widget.tableViewHistory.setItemDelegate(UnixDateDelegate(self, self.widget.tableViewHistory)) #преобразовывать юниксдату
-        
+        #??self.widget.tableViewHistory.setItemDelegate(UnixDateDelegate(self, self.widget.tableViewHistory, self.db.lottery_config.IsFonbet)) #преобразовывать юниксдату
+        self.widget.tableViewHistory.setItemDelegate(UnixDateDelegate(self, self.db.lottery_config.IsFonbet))
         self.widget.tableViewHistory.setAlternatingRowColors(True);
     pass #compareDraws

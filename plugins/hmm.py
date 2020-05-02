@@ -20,6 +20,7 @@ class HMM(QWidget):
         super(HMM, self).__init__()
         self.widget = loadUi('plugins\\hmm.ui', self)
         self.db=database
+        self.check_by_position= False # проверять совпадения по позициям
         # Connect the trigger signal to a slot.
         self.db.databaseOpened[str].connect(self.onDatabaseOpened)
         self.db.databaseClosed[str].connect(self.onDatabaseClosed)
@@ -30,6 +31,10 @@ class HMM(QWidget):
         self.widget.comboBoxCovarianceType.activated[str].connect(self.onCovarianceTypeSelected)
         self.widget.labelCovarianceType.setText("tied")
 
+        # если загружаем плагин уже при открытой базе данных
+        if not self.db.isClosed:
+            self.databaseOpened(self.db.path)
+
     @QtCore.pyqtSlot(str, name='onDatabaseOpened')
     def databaseOpened(self,name):
         #self.widget.plainTextEdit.appendPlainText('File {} opened. NumberOfBalls2 {}'.format(name,self.db.lottery_config.NumberOfBalls2));
@@ -39,6 +44,7 @@ class HMM(QWidget):
         self.widget.spinBoxToDraw.setValue(self.db.lottery_config.LastDrawNumber-1)
         self.widget.spinBoxFromDraw.setValue(self.db.lottery_config.LastDrawNumber-11)
         
+        self.check_by_position =(self.db.lottery_config.IsFonbet or self.db.lottery_config.IsTop3)
         
     @QtCore.pyqtSlot(str, name='onDatabaseClosed')
     def databaseClosed(self,name):
@@ -150,14 +156,15 @@ class HMM(QWidget):
             if self.db.lottery_config.NumberOfBalls2==0: #если нет дополнительных
                 coins=[]
                 for checkDraw in checkDraws:
-                    coins.append(compare_balls_detail(draw,checkDraw))
+                    coins.append(compare_balls_detail(draw, checkDraw, self.check_by_position))
+
                 self.widget.plainTextEdit.appendPlainText('{}, совпадений {}'.format(printf(draw),coins))
             else:
                 coins1=[]
                 coins2=[]
                 for checkDraw in checkDraws:
-                    coins1.append(compare_balls_detail(draw[0:self.db.lottery_config.NumberOfBalls1],checkDraw[0:self.db.lottery_config.NumberOfBalls1]))
-                    coins2.append(compare_balls_detail(draw[self.db.lottery_config.NumberOfBalls1:],checkDraw[self.db.lottery_config.NumberOfBalls1:]))
+                    coins1.append(compare_balls_detail(draw[0:self.db.lottery_config.NumberOfBalls1],checkDraw[0:self.db.lottery_config.NumberOfBalls1], self.check_by_position))
+                    coins2.append(compare_balls_detail(draw[self.db.lottery_config.NumberOfBalls1:],checkDraw[self.db.lottery_config.NumberOfBalls1:], self.check_by_position))
                 self.widget.plainTextEdit.appendPlainText('{}, совпадений основных {},дополнительных {}'.format(printf(draw),coins1,coins2))
 
         pass #printResults

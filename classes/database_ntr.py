@@ -9,6 +9,7 @@ from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtWidgets import QApplication
 
 from classes.common import *
+from classes.constants import *
 
 class NtrDb:
     """

@@ -12,10 +12,15 @@ import importlib
 
 from forms.historyform import HistoryForm
 from forms.placeholderform import PlaceHolderForm
-from forms.messageform import MessageForm
+
+from forms.optionsform import OptionsForm
 from classes.common import *
+from classes.constants import *
 from classes.database import Db
-from classes.importhelper import import_plugins
+from classes.importhelper import import_plugins, import_plugin
+import classes.program_options as program_options
+
+from _version import __version__, __date__
 
 class MainWindow(QMainWindow):
     """This is the class of the MainApp GUI system"""
@@ -24,19 +29,30 @@ class MainWindow(QMainWindow):
     def __init__(self):
         """Constructor method that inherits methods from QWidgets"""
         super().__init__()
+
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.plugins_directory_path = os.path.join(script_dir, 'plugins')
         #self.root=pathlib.Path().absolute()
         self.database=Db()
         self.root = QFileInfo(__file__).absolutePath()
         self.default_open_dir=self.root+"/"+DATABASES_FOLDER
         self.settings = QSettings(self.root+"/settings.ini", QSettings.IniFormat)
-        self.recentFileActs = []
+        self.recent_file_acts = [] # действия для открытия последних файлов
+        self.available_plugins = [] # доступные в папке plugins плагины
+        self.disabled_plugins = [] # не загружаемые плагины
+        self.loaded_plugins = [] # загруженные плагины
+        self.load_plugin_acts = [] # действия для открытия доступных плагинов
         self.curFile = ''
 
         self.initUI()
         
-        self.open_test_file()
+        if program_options.load_last_opened_database and program_options.last_opened_database:
+            self.open_file(program_options.last_opened_database)
+     
+        #self.open_test_file()
 
     def open_test_file(self):
+        return
         #self.open_file(self.default_open_dir+"/4x20.ntr")
         self.open_file(self.default_open_dir+"/eurojackpot.sqlite")
 
@@ -50,12 +66,6 @@ class MainWindow(QMainWindow):
 
     def maybe_exit(self):
         return True
-
-    def mock(self):
-        pass
-
-    def load_file(self,file):
-        print(file)
 
     def close_file(self):
         self.updateAct.setEnabled(False)
@@ -81,9 +91,31 @@ class MainWindow(QMainWindow):
         if action:
             self.open_file(action.data())
 
+    def load_plugin(self):
+        action = self.sender()
+        if action:
+            module_name=action.data()
+            plugin = import_plugin(self.database, self.plugins_directory_path, module_name)
+            if plugin.plugin_name not in self.loaded_plugins:
+                self.loaded_plugins.append(plugin.plugin_name)
+            index=self.placeHolder.addForm(plugin)
+            self.placeHolder.setCurrentIndex(index)
+
     def about(self):
         QMessageBox.about(self, "About Pythotron",
-                "Программа <b>Pythotron</b> для анализа лотерей. <a href='"+HELP_URL+"'>Подробнее на форуме Upad.ru</a>")
+                "<p>Программа <b>Pythotron</b> для анализа лотерей. <a href='"+HELP_URL+"'>Подробнее на форуме Upad.ru</a></p> \
+                <p><strong>Версия "+__version__+" от "+__date__+"</strong></p>")
+
+    def show_options(self):
+        dlg = OptionsForm(self)
+        dlg.available_plugins=self.available_plugins
+        dlg.disabled_plugins=self.disabled_plugins
+        #dlg.loaded_plugins=self.loaded_plugins
+        dlg.create_plugins_list()
+
+        if dlg.exec_():
+            self.disabled_plugins=dlg.disabled_plugins
+
 
     def play_lottery(self):
         openurl(LOTTERY_PLAY_URL)
@@ -92,10 +124,9 @@ class MainWindow(QMainWindow):
         try:
             if self.database.isClosed: return
             
-            module = importlib.import_module("." + self.database.lottery_config.DataImportPlugin, package='dataimport')
+            module = importlib.import_module("." + self.database.lottery_config.DataImportPlugin.lower(), package='dataimport')
             form=module.DataImport(self,self.database)
-            #form.show()
-            form.exec_()
+            form.show_form()
             if form.added>0: #обновлено больше 0 тиражей нужно грид обновить
                 self.database.update_history_view()
            
@@ -115,7 +146,6 @@ class MainWindow(QMainWindow):
         """ Создание GUI  """
         self.historyForm =  HistoryForm(self.database)
         self.placeHolder =  PlaceHolderForm()
-        self.messageForm =  MessageForm()
 
         splitterV = QSplitter(Qt.Vertical)
         splitterV.setStyleSheet('background-color:beige')
@@ -129,21 +159,21 @@ class MainWindow(QMainWindow):
         splitterV.addWidget(splitterH);
         #splitterV.addWidget(self.messageForm);
 
-        self.create_actions()
+        desktop = QApplication.desktop()
+        self.setGeometry(50, 50, 900, 500)
+        self.move(desktop.availableGeometry().center()- self.rect().center()) #по умолчению в центре экрана
+        self.read_settings() # вначале восстанавливаем настройки, положение
+
+        self.create_plugins() # затем читаем и загружаем нужные плагины
+
+        self.create_actions() # а затем создаем нужные действия
         self.create_menus()
         self.create_tool_bars()
         self.create_status_bar()
-        self.create_plugins()
 
-        self.setGeometry(50, 50, 900, 500)
-        #self.setFixedSize(self.size())
+
         self.setWindowTitle(APPLICATION_NAME)
         self.setWindowIcon(QIcon(self.root + '/images/logo.png'))
-
-        desktop = QApplication.desktop()
-        self.move(desktop.availableGeometry().center()- self.rect().center()) #по умолчению в центре экрана
-
-        self.read_settings() #восстанавливаем настройки, положение
 
         splitterV.setStretchFactor(0, 200);
         splitterV.setStretchFactor(1, 1);
@@ -155,19 +185,23 @@ class MainWindow(QMainWindow):
         self.show()
 
     def create_plugins(self):
-        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-        plugins_directory_path = os.path.join(SCRIPT_DIR, 'plugins')
-        plugins = import_plugins(self.database, plugins_directory_path)
-
+        self.available_plugins.clear()
+        plugins = import_plugins(self.database, self.plugins_directory_path, self.disabled_plugins, self.available_plugins )
+        
         lasIndex=0
+        self.loaded_plugins.clear()
         for plugin in plugins:
-           lasIndex= self.placeHolder.addForm(plugin)
+            self.loaded_plugins.append(plugin.plugin_name)
+            lasIndex= self.placeHolder.addForm(plugin)
 
         self.placeHolder.setCurrentIndex(1)    
 
     def create_actions(self):
         for i in range(MainWindow.MaxRecentFiles):
-            self.recentFileActs.append(QAction(self, visible=False, triggered=self.open_recent_file)) #последние файлы
+            self.recent_file_acts.append(QAction(self, visible=False, triggered=self.open_recent_file)) #последние файлы
+
+        for i in range(len(self.available_plugins)):
+            self.load_plugin_acts.append(QAction(self, visible=False, triggered=self.load_plugin))
 
         self.closeAct = QAction(QIcon(self.root + '/images/close.png'), "&Close", self,
                 shortcut=QKeySequence.Close, statusTip="Закрыть базу данных", triggered=self.close_file)
@@ -175,6 +209,8 @@ class MainWindow(QMainWindow):
         self.openAct = QAction(QIcon(self.root + '/images/open.png'), "&Open...",
                 self, shortcut=QKeySequence.Open, statusTip="Открыть базу данных", triggered=self.open_file)
 
+        self.optionsAct = QAction(QIcon(self.root + '/images/options.png'), "O&ptions...",
+                self, statusTip="Настройка программы", triggered=self.show_options)
 
         self.playAct = QAction(QIcon(self.root + '/images/chips.png'), "Play lottery", self,
                 statusTip="Играть в полулярные мировые лотереи", triggered=self.play_lottery)
@@ -199,10 +235,21 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.closeAct)
         self.separatorAct = self.fileMenu.addSeparator()
         for i in range(MainWindow.MaxRecentFiles):
-            self.fileMenu.addAction(self.recentFileActs[i])
+            self.fileMenu.addAction(self.recent_file_acts[i])
 
         self.fileMenu.addSeparator();
         self.fileMenu.addAction(self.exitAct)
+
+        self.tools_menu = self.menuBar().addMenu("&Tools")
+        self.tools_menu.addAction(self.optionsAct)
+        
+        self.plugins_menu = self.menuBar().addMenu("&Plugins")
+        for i, plugin in enumerate(self.available_plugins):
+            text = "%d %s" % ((i+1), plugin)
+            self.load_plugin_acts[i].setText(text)
+            self.load_plugin_acts[i].setData(plugin)
+            self.load_plugin_acts[i].setVisible(True)
+            self.plugins_menu.addAction(self.load_plugin_acts[i])
 
         self.play_menu = self.menuBar().addMenu("&Play")
         items = [("Eurojackpot",EUROJACKPOT_PLAY_URL),("Euromillions",EUROMILLIONS_PLAY_URL),("Мировые лотереи",LOTTERY_PLAY_URL)]
@@ -223,8 +270,9 @@ class MainWindow(QMainWindow):
 
     def set_current_file(self, fileName):
         self.curFile = fileName
+        program_options.last_opened_database = fileName
 
-        files = self.settings.value('recentFileList', [])
+        files = self.settings.value('recentFileList', [], 'QStringList')
 
         try:
             files.remove(fileName) #TODO удаление независимо от регистра
@@ -245,12 +293,12 @@ class MainWindow(QMainWindow):
 
         for i in range(numRecentFiles):
             text = "&%d %s" % (i + 1, self.stripped_name(files[i]))
-            self.recentFileActs[i].setText(text)
-            self.recentFileActs[i].setData(files[i])
-            self.recentFileActs[i].setVisible(True)
+            self.recent_file_acts[i].setText(text)
+            self.recent_file_acts[i].setData(files[i])
+            self.recent_file_acts[i].setVisible(True)
 
         for j in range(numRecentFiles, MainWindow.MaxRecentFiles):
-            self.recentFileActs[j].setVisible(False)
+            self.recent_file_acts[j].setVisible(False)
 
         self.separatorAct.setVisible((numRecentFiles > 0))
 
@@ -267,6 +315,9 @@ class MainWindow(QMainWindow):
         self.playToolBar = self.addToolBar("Play")
         self.playToolBar.addAction(self.playAct)
 
+        self.toolsToolBar = self.addToolBar("Tools")
+        self.toolsToolBar.addAction(self.optionsAct)
+
         self.exitToolBar = self.addToolBar("Exit")
         self.exitToolBar.addAction(self.exitAct)
 
@@ -277,6 +328,11 @@ class MainWindow(QMainWindow):
         """
         если сохраняется максимизированным то нужно размеры для возвращения в нормальное состояние менять
         """
+        self.disabled_plugins=self.settings.value('plugins/disabled', [], 'QStringList')
+        
+        program_options.load_last_opened_database=self.settings.value('load_last_opened_database', False, bool)
+        program_options.last_opened_database=self.settings.value('last_opened_database', '')
+
         pos = self.settings.value("pos", QPoint(100, 100))
         size = self.settings.value("size", QSize(800, 400))
         maximized=self.settings.value("maximized", False,bool)
@@ -290,10 +346,18 @@ class MainWindow(QMainWindow):
            self.move(pos)
 
     def write_settings(self):
+        # General
         self.settings.setValue("pos", self.pos())
         self.settings.setValue("size", self.size())
         self.settings.setValue("maximized", self.windowState() == Qt.WindowMaximized)
         self.settings.setValue("minimized", self.windowState() == Qt.WindowMinimized)
+        self.settings.setValue('load_last_opened_database', program_options.load_last_opened_database)
+        self.settings.setValue('last_opened_database', program_options.last_opened_database)
+
+        # Plugins
+        self.settings.setValue('plugins/disabled', self.disabled_plugins)
+        
+        
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

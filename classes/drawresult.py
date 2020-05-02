@@ -8,6 +8,7 @@ class DrawResult:
         self.balls1 = []
         self.balls2 = []
         self.wins = {} #2+1:7,2$ ...  3:10$ 5:10000000$ призовая категория:выигрыш
+        self.fonbet_id =0 # для тото фонбета реальный ID тиража
 
     def __str__(self):
         str_list = []

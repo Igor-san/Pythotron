@@ -31,7 +31,7 @@ class KerasNet(QWidget):
         self.widget = loadUi('plugins\\kerasnet.ui', self)
         self.db=database # общая база данных
         self.network=None # нейронная сеть
-        
+        self.check_by_position= False # проверять совпадения по позициям
         # Connect the trigger signal to a slot.
         self.db.databaseOpened[str].connect(self.onDatabaseOpened)
         self.db.databaseClosed[str].connect(self.onDatabaseClosed)
@@ -50,7 +50,7 @@ class KerasNet(QWidget):
         self.widget.spinBoxIterations.setValue(100)
         self.widget.spinBoxPredictCount.setValue(1)
 
-#GPU на 400 тиражах текущей конйигурации
+#GPU на 400 тиражах текущей конфигурации
 #затрачено:  00:00:33 - 100 эпох
 #затрачено:  00:05:51 - 1000 эпох
 #CPU
@@ -66,6 +66,10 @@ class KerasNet(QWidget):
 
         # и только сейчас подключим слот чтобы не сработал на код выше
         self.widget.checkBoxUseGpu.stateChanged.connect(self.onUseGpuStateChanged)
+
+        # если загружаем плагин уже при открытой базе данных
+        if not self.db.isClosed:
+            self.databaseOpened(self.db.path)
 
 
     def status_message(self,*args):
@@ -84,13 +88,15 @@ class KerasNet(QWidget):
             self.enable_gpu(False)
 
     @QtCore.pyqtSlot(str, name='onDatabaseOpened')
-    def databaseOpened(self,name):
+    def databaseOpened(self, name):
         self.widget.setEnabled(True)
         self.widget.spinBoxCheckToDraw.setValue(self.db.lottery_config.LastDrawNumber)
         self.widget.spinBoxCheckFromDraw.setValue(self.db.lottery_config.LastDrawNumber)
         self.widget.spinBoxToDraw.setValue(self.db.lottery_config.LastDrawNumber-1)
         self.widget.spinBoxFromDraw.setValue(self.db.lottery_config.LastDrawNumber-11)
         self.widget.spinBoxInputDraw.setValue(self.db.lottery_config.LastDrawNumber-1)
+
+        self.check_by_position =(self.db.lottery_config.IsFonbet or self.db.lottery_config.IsTop3)
         
     @QtCore.pyqtSlot(str, name='onDatabaseClosed')
     def databaseClosed(self,name):
@@ -247,7 +253,10 @@ class KerasNet(QWidget):
             network = models.Sequential()
             # функции активации https://keras.io/activations/ 
             # elu, softmax, selu, softplus, softsign, relu, tanh, sigmoid, hard_sigmoid, exponential, linear, 
-            network.add(layers.Dense(input_size, activation='relu', input_shape=(input_size,)))
+            hidden_neurons=input_size
+            network.add(layers.Dense(hidden_neurons, activation='relu', input_shape=(input_size,)))
+            network.add(layers.Dense(hidden_neurons, activation='relu'))
+            #network.add(layers.Dense(64, kernel_regularizer=tf.keras.regularizers.l1(0.01)))
             # много простора для самодеятельности
             #network.add(layers.BatchNormalization())
             #network.add(layers.Dense(input_size*2, activation='relu'))
@@ -266,7 +275,8 @@ class KerasNet(QWidget):
             # compilation компиляция модели - и тут также можно порезвиться
             #network.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy']) 
             #network.compile(optimizer='rmsprop', loss=self.loss_function, metrics=['accuracy']) #понятие точности неприменимо для регрессии, поэтому для оценки качества часто применяется средняя абсолютная ошибка (Mean Absolute Error, MAE).
-            network.compile(optimizer='rmsprop', loss=self.loss_function, metrics=['mse'], run_eagerly=True)
+            network.compile(optimizer=tf.keras.optimizers.Adam(0.01), loss=self.loss_function, metrics=['mse'], run_eagerly=True)
+  
             #Подготовка исходных данных - полностью используем тиражи на обучение
 
             train_images=np.copy(draws[:-1])
@@ -299,12 +309,12 @@ class KerasNet(QWidget):
             plt.ion() #чтобы в PyQT выполнялось
             plt.clf()
             ## "bo" is for "blue dot"
-            plt.plot(epochs, key0, 'bo', label='Training key0')
+            plt.plot(epochs, key0, 'bo', label=dict_arr[0])
             ## b is for "solid blue line"
-            plt.plot(epochs, key1, 'b', label='key1')
+            plt.plot(epochs, key1, 'b', label=dict_arr[1])
             plt.title('Training and validation')
             plt.xlabel('Epochs')
-            plt.ylabel('key0')
+            plt.ylabel(dict_arr[0])
             plt.legend()
 
             #plt.show() #не нужно
@@ -327,14 +337,14 @@ class KerasNet(QWidget):
             if self.db.lottery_config.NumberOfBalls2==0: #если нет дополнительных
                 coins=[]
                 for checkDraw in checkDraws:
-                    coins.append(compare_balls_detail(draw,checkDraw))
+                    coins.append(compare_balls_detail(draw,checkDraw, self.check_by_position))
                 self.widget.plainTextEdit.appendPlainText('{}, совпадений {}'.format(printf(draw),coins))
             else:
                 coins1=[]
                 coins2=[]
                 for checkDraw in checkDraws:
-                    coins1.append(compare_balls_detail(draw[0:self.db.lottery_config.NumberOfBalls1],checkDraw[0:self.db.lottery_config.NumberOfBalls1]))
-                    coins2.append(compare_balls_detail(draw[self.db.lottery_config.NumberOfBalls1:],checkDraw[self.db.lottery_config.NumberOfBalls1:]))
+                    coins1.append(compare_balls_detail(draw[0:self.db.lottery_config.NumberOfBalls1],checkDraw[0:self.db.lottery_config.NumberOfBalls1], self.check_by_position))
+                    coins2.append(compare_balls_detail(draw[self.db.lottery_config.NumberOfBalls1:],checkDraw[self.db.lottery_config.NumberOfBalls1:], self.check_by_position))
                 self.widget.plainTextEdit.appendPlainText('{}, совпадений основных {},дополнительных {}'.format(printf(draw),coins1,coins2))
 
         pass #printResults

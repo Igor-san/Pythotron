@@ -26,6 +26,9 @@
     <Compile Include="classes\common.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="classes\constants.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="classes\database.py">
       <SubType>Code</SubType>
     </Compile>
@@ -38,6 +41,9 @@
     <Compile Include="classes\importhelper.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="classes\program_options.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="classes\unixdatedelegate.py">
       <SubType>Code</SubType>
     </Compile>
@@ -47,8 +53,14 @@
     <Compile Include="dataimport\euromillions.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="dataimport\fonbet.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="forms\historyform.py" />
     <Compile Include="forms\messageform.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="forms\optionsform.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="forms\placeholderform.py">
@@ -61,7 +73,11 @@
     <Compile Include="plugins\kerasnet.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="plugins\rngform.py" />
     <Compile Include="Pythotron.py" />
+    <Compile Include="_version.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="forms\" />
