@@ -1,18 +1,20 @@
-# Pythotron
-Lottery program in Pyton 3
+# Lottery program in Python 3
 
-Нужно установить
--PyQt5
--numpy
+## Нужно установить 
 
-Для обновления лотерей
--urllib
--bs4
--lxml
+#### Основное
+* PyQt5
 
-Для модуля Hidden Markov Models
--hmmlearn
 
-Для модуля KerasNet
--tensorflow
--keras (или использовать keras из tensorflow2)
+#### Для обновления лотерей
+* urllib
+* bs4
+* lxml
+
+#### Для модуля Hidden Markov Models
+* hmmlearn
+* numpy
+
+#### Для модуля KerasNet
+* tensorflow
+* keras (или использовать keras из tensorflow2)
