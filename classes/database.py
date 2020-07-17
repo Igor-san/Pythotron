@@ -1,8 +1,10 @@
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QSortFilterProxyModel
 import numpy as np
-import collections, datetime
-#from datetime import date, time, datetime
+import collections
+import datetime
+import distutils.util
+
 from classes.database_ntr import *
 from classes.common import *
 from classes.constants import *
@@ -327,15 +329,15 @@ class Db(QObject): #QObject а не object для pyqtSignal
             elif key.lower() == 'EndOfBalls2'.lower(): self.EndOfBalls2=int(value)
             elif key.lower() == 'DataImportPlugin'.lower(): self.DataImportPlugin=str(value)
             elif key.lower() == 'WinCategories'.lower():
-               self.WinCategories=str(value)
-               self._prepare_prizes_array()
+                self.WinCategories=str(value)
+                self._prepare_prizes_array()
             elif key.lower() == 'DefaultWinCost'.lower(): self.DefaultWinCost=str(value)     
             elif key.lower() == 'GameType'.lower(): self.GameType=str(value)
-            elif key.lower() == 'IsFonbet'.lower(): self.IsFonbet=bool(value)
-            elif key.lower() == 'IsTop3'.lower(): self.IsTop3=bool(value)
-            elif key.lower() == 'WithWins'.lower(): self.WithWins=bool(value)
-            elif key.lower() == 'MultipleAppearance1'.lower(): self.MultipleAppearance1=bool(value)
-            elif key.lower() == 'MultipleAppearance2'.lower(): self.MultipleAppearance2=bool(value)
+            elif key.lower() == 'IsFonbet'.lower(): self.IsFonbet=bool(distutils.util.strtobool(value))
+            elif key.lower() == 'IsTop3'.lower():  self.IsTop3=bool(distutils.util.strtobool(value))
+            elif key.lower() == 'WithWins'.lower(): self.WithWins=bool(distutils.util.strtobool(value))
+            elif key.lower() == 'MultipleAppearance1'.lower(): self.MultipleAppearance1=bool(distutils.util.strtobool(value))
+            elif key.lower() == 'MultipleAppearance2'.lower(): self.MultipleAppearance2=bool(distutils.util.strtobool(value))
         
         def _prepare_prizes_array(self):
             """из 4+1,5,...,8,8+1 сделать список['WP4S1,WP5,...WP8,WP8S1']  """

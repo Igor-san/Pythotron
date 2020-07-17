@@ -4,6 +4,8 @@ import os
 import string
 import datetime
 import locale
+import platform
+
 from dateutil import rrule
 
 _locale_radix = locale.localeconv()['decimal_point']
@@ -24,6 +26,25 @@ def printf(*args):
     """ аналог print но возвращает строку"""
     return ''.join(map(str, args)) 
 
+def play_sound(sound_file):
+    """Plays the audio file that is at the fully qualified path `sound_file`"""
+    system = platform.system()
+    if system == "Windows":
+        import winsound
+        winsound.PlaySound(sound_file,
+                           winsound.SND_FILENAME | winsound.SND_ASYNC)
+    elif system == "Darwin":  # macOS
+        from AppKit import NSSound
+        from Foundation import NSURL
+        cwd = os.getcwd()
+        url = NSURL.URLWithString_("file://" + sound_file)
+        NSSound.alloc().initWithContentsOfURL_byReference_(url, True).play()
+    else:  # Linux
+        import subprocess
+        command = ["aplay", sound_file]
+        subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            bufsize=0, universal_newlines=True) 
 
 def string_to_float(value):
     '''

@@ -14,14 +14,19 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
-#import os # disable GPU
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1" #  прямой путь disable GPU
+import os # disable GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1" #  прямой путь disable GPU
 
 import tensorflow as tf
 # использую tensorflow.keras а не keras как рекомендовано https://www.tensorflow.org/guide/effective_tf2
 from tensorflow.keras import backend as K
 from tensorflow.keras import models
 from tensorflow.keras import layers
+
+import classes.common as common
+from classes.settings import Settings
+
+wav_file_on_end = '' # файл проигрываемый по окончанию обучения
 
 class KerasNet(QWidget):
     stop_process=False # остановка процесса обучения
@@ -200,6 +205,13 @@ class KerasNet(QWidget):
 
     def keras_create_model(self):
         """ Создание и обучение нейросети """
+
+        global wav_file_on_end
+
+        wav_file_on_end = ''
+        if self.widget.checkBoxWavOnEnd.isChecked() and Settings.wav_file_path and os.path.isfile(Settings.wav_file_path):
+            wav_file_on_end = Settings.wav_file_path
+
         # подготовим выбранные тиражи
         self.widget.checkBoxUseGpu.setEnabled(False) #теперь сменить ЦПУ/ГПУ только при перезагрузке...или писать дополнительно код для fit и predict
        
@@ -283,7 +295,7 @@ class KerasNet(QWidget):
             train_labels=np.copy(draws[1:])
             input_draws=np.copy(inputDraws)
        
-            callbacks_list = [StopTeachCallback()]
+            callbacks_list =[MyCustomCallback()] # [StopTeachCallback()]
             predicted_data=[]
             for i in range(predictCount):
                 #teach start
@@ -349,7 +361,16 @@ class KerasNet(QWidget):
 
         pass #printResults
 
-class StopTeachCallback(tf.keras.callbacks.Callback): 
+#class StopTeachCallback(tf.keras.callbacks.Callback): 
+#    """ обратный вызов для остановки обучения по кнопке """
+#    def on_epoch_end(self, epoch, logs=None):
+#        QApplication.processEvents()
+#        if KerasNet.stop_process:  
+#            print('останавливаю по запросу пользователя')
+#            self.model.stop_training = True
+
+
+class MyCustomCallback(tf.keras.callbacks.Callback):
     """ обратный вызов для остановки обучения по кнопке """
     def on_epoch_end(self, epoch, logs=None):
         QApplication.processEvents()
@@ -357,5 +378,18 @@ class StopTeachCallback(tf.keras.callbacks.Callback):
             print('останавливаю по запросу пользователя')
             self.model.stop_training = True
 
+    def on_train_end(self, logs=None):
+        if wav_file_on_end:
+            common.play_sound(wav_file_on_end)
 
+    #def on_train_batch_begin(self, batch, logs=None):
+    #    print('Training: batch {} begins at {}'.format(batch, datetime.datetime.now().time()))
 
+    #def on_train_batch_end(self, batch, logs=None):
+    #    print('Training: batch {} ends at {}'.format(batch, datetime.datetime.now().time()))
+
+    #def on_test_batch_begin(self, batch, logs=None):
+    #    print('Evaluating: batch {} begins at {}'.format(batch, datetime.datetime.now().time()))
+
+    #def on_test_batch_end(self, batch, logs=None):
+    #    print('Evaluating: batch {} ends at {}'.format(batch, datetime.datetime.now().time()))

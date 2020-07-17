@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime
 from datetime import timezone
+from classes.common import dbg_except
 
 from classes.drawresult import DrawResult
 
@@ -116,7 +117,7 @@ def GetLastDraw():
 
 def parse_date(date_str):
     #так PEP8 не рекомендует l = lambda x: datetime.fromtimestamp(int(x[6:-2][:-3]))
-    return datetime.datetime.fromtimestamp(int(date_str[6:-2][:-3]))
+    return datetime.fromtimestamp(int(date_str[6:-2][:-3]))
 
 class Draw:
     """ Класс для тиража с сайта Фонбета"""
@@ -150,6 +151,8 @@ class Draw:
                     self.ball=2
                 elif self.ResultCode=="X":
                     self.ball=0
+                elif self.ResultCode=="0":  # отменен
+                    self.ball=-1 
                 elif self.ResultCode=="None": # None еще не расчитан
                     self.ball=-1 
                 else:

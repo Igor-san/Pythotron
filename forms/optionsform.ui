@@ -36,6 +36,46 @@
         <string>автоматически загружать последнюю базу данных</string>
        </property>
       </widget>
+      <widget class="QToolButton" name="buttonOpenWavLocation">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>25</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEditWavLocation">
+       <property name="geometry">
+        <rect>
+         <x>40</x>
+         <y>60</y>
+         <width>301</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="buttonPlayWav">
+       <property name="geometry">
+        <rect>
+         <x>349</x>
+         <y>59</y>
+         <width>21</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../images/play_wavpx.png</normaloff>../images/play_wavpx.png</iconset>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="tabPlugins">
       <attribute name="title">

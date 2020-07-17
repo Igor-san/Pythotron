@@ -403,6 +403,22 @@
          <string>Use Gpu</string>
         </property>
        </widget>
+       <widget class="QCheckBox" name="checkBoxWavOnEnd">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>110</y>
+          <width>101</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="statusTip">
+         <string>wav файл задается в настройках</string>
+        </property>
+        <property name="text">
+         <string>звук окончания</string>
+        </property>
+       </widget>
       </widget>
      </widget>
      <widget class="QPlainTextEdit" name="plainTextEdit">

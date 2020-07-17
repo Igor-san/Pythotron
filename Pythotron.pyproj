@@ -41,7 +41,7 @@
     <Compile Include="classes\importhelper.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="classes\program_options.py">
+    <Compile Include="classes\settings.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="classes\unixdatedelegate.py">
@@ -87,6 +87,9 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="CHANGELOG.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

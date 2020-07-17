@@ -1,10 +1,15 @@
 import sys
+import os
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.uic import loadUi 
-from PyQt5.QtWidgets import QDialog, QApplication, QHBoxLayout
+from PyQt5.QtWidgets import QDialog, QApplication, QHBoxLayout, QFileDialog
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPalette
 from classes.database import Db
-import classes.program_options as program_options
+
+import classes.common as common
+from classes.settings import Settings
 
 class OptionsForm(QDialog):
 
@@ -20,6 +25,10 @@ class OptionsForm(QDialog):
         self.widget.buttonBox.accepted.connect(self.onAcceptClick)
         self.widget.buttonBox.rejected.connect(self.onRejectClick)
 
+        self.widget.buttonOpenWavLocation.clicked.connect(self.onOpenWavLocationClick)
+        self.widget.buttonPlayWav.clicked.connect(self.onPlayWavClick)
+
+
     @QtCore.pyqtSlot(name='onRejectClick')
     def rejectClick(self):
         self.reject()
@@ -27,14 +36,55 @@ class OptionsForm(QDialog):
     @QtCore.pyqtSlot(name='onAcceptClick')
     def acceptClick(self):
         ''' временное сохранение изменений, в конфиге сохранится при выходе из программы '''
-        program_options.load_last_opened_database = self.widget.checkBoxLoadLastOpenedDatabase.isChecked()
+        Settings.load_last_opened_database = self.widget.checkBoxLoadLastOpenedDatabase.isChecked()
+        Settings.wav_file_path = self.widget.lineEditWavLocation.text()
+
         self._set_disabled_plugins()
-        self.accept()
+        self.widget.accept()
+        self.close()
         pass # end accept
+
+    @QtCore.pyqtSlot(name='onOpenWavLocationClick')
+    def openWavLocationClick(self):
+        ''' выбор воспроизводимого файла '''
+        try:
+
+            file_name, _ = QFileDialog.getOpenFileName(parent=self, caption= 'Open file', directory=".", filter= "WAV files(*.wav)")
+            if not file_name:
+                return
+
+            self.widget.lineEditWavLocation.setText(file_name)
+
+        except Exception as e:
+            print('OptionsForm:openWavLocationClick error: ', e)
+            dbg_except()
+        pass # end openWavLocationClick
+
+    @QtCore.pyqtSlot(name='onPlayWavClick')
+    def playWavClick(self):
+        ''' проигрывание воспроизводимого файла '''
+
+        try:
+            palette = QPalette();
+            path = self.widget.lineEditWavLocation.text()
+            if os.path.isfile(path):
+                common.play_sound(path)
+                palette.setColor(QPalette.Text, Qt.black);
+                self.widget.lineEditWavLocation.setPalette(palette);
+            else:
+                print(f"File {path} not exist")
+                palette.setColor(QPalette.Text, Qt.red);
+                self.widget.lineEditWavLocation.setPalette(palette);
+
+        except Exception as e:
+            print('OptionsForm:playWavClick error: ', e)
+            dbg_except()
+        pass # end playWavClick
 
     def _load_options(self):
 
-        self.widget.checkBoxLoadLastOpenedDatabase.setChecked(program_options.load_last_opened_database)
+        self.widget.checkBoxLoadLastOpenedDatabase.setChecked(Settings.load_last_opened_database)
+        if Settings.wav_file_path: self.widget.lineEditWavLocation.setText(Settings.wav_file_path)
 
         pass # end _load_options
 

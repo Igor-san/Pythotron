@@ -18,7 +18,8 @@ from classes.common import *
 from classes.constants import *
 from classes.database import Db
 from classes.importhelper import import_plugins, import_plugin
-import classes.program_options as program_options
+
+from classes.settings import Settings
 
 from _version import __version__, __date__
 
@@ -30,24 +31,29 @@ class MainWindow(QMainWindow):
         """Constructor method that inherits methods from QWidgets"""
         super().__init__()
 
+        self.root = QFileInfo(__file__).absolutePath()
+        self.settings=Settings(self)
+        ##self.settings = QSettings(self.root+"/settings.ini", QSettings.IniFormat)
+
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.plugins_directory_path = os.path.join(script_dir, 'plugins')
-        #self.root=pathlib.Path().absolute()
+
         self.database=Db()
-        self.root = QFileInfo(__file__).absolutePath()
+        
         self.default_open_dir=self.root+"/"+DATABASES_FOLDER
-        self.settings = QSettings(self.root+"/settings.ini", QSettings.IniFormat)
+        
         self.recent_file_acts = [] # действия для открытия последних файлов
         self.available_plugins = [] # доступные в папке plugins плагины
         self.disabled_plugins = [] # не загружаемые плагины
         self.loaded_plugins = [] # загруженные плагины
         self.load_plugin_acts = [] # действия для открытия доступных плагинов
+        self.recentFiles = [] # последние загруженные файлы
         self.curFile = ''
 
         self.initUI()
-        
-        if program_options.load_last_opened_database and program_options.last_opened_database:
-            self.open_file(program_options.last_opened_database)
+
+        if Settings.load_last_opened_database and Settings.last_opened_database:
+            self.open_file(Settings.last_opened_database)
      
         #self.open_test_file()
 
@@ -59,7 +65,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """ случается при попытке закрыть виджет"""
         if self.maybe_exit():
-            self.write_settings()
+            self.settings.write_settings()
             event.accept()
         else:
             event.ignore()
@@ -162,7 +168,9 @@ class MainWindow(QMainWindow):
         desktop = QApplication.desktop()
         self.setGeometry(50, 50, 900, 500)
         self.move(desktop.availableGeometry().center()- self.rect().center()) #по умолчению в центре экрана
-        self.read_settings() # вначале восстанавливаем настройки, положение
+
+        self.settings.read_settings() # вначале восстанавливаем настройки, положение
+        ##self.read_settings()
 
         self.create_plugins() # затем читаем и загружаем нужные плагины
 
@@ -270,31 +278,31 @@ class MainWindow(QMainWindow):
 
     def set_current_file(self, fileName):
         self.curFile = fileName
-        program_options.last_opened_database = fileName
+        Settings.last_opened_database = fileName
 
-        files = self.settings.value('recentFileList', [], 'QStringList')
+        #self.recentFiles = self.settings.value('recentFileList', [], 'QStringList')
 
         try:
-            files.remove(fileName) #TODO удаление независимо от регистра
+            self.recentFiles.remove(fileName) #TODO удаление независимо от регистра
         except ValueError:
             pass
 
-        files.insert(0, fileName)
-        del files[MainWindow.MaxRecentFiles:]
+        self.recentFiles.insert(0, fileName)
+        del self.recentFiles[MainWindow.MaxRecentFiles:]
 
-        self.settings.setValue('recentFileList', files)
+        #self.settings.setValue('recentFileList', files)
 
         self.update_recent_file_actions()
 
     def update_recent_file_actions(self):
-        files = self.settings.value('recentFileList', [])
+        #files = self.settings.value('recentFileList', [])
 
-        numRecentFiles = min(len(files), MainWindow.MaxRecentFiles)
+        numRecentFiles = min(len(self.recentFiles), MainWindow.MaxRecentFiles)
 
         for i in range(numRecentFiles):
-            text = "&%d %s" % (i + 1, self.stripped_name(files[i]))
+            text = "&%d %s" % (i + 1, self.stripped_name(self.recentFiles[i]))
             self.recent_file_acts[i].setText(text)
-            self.recent_file_acts[i].setData(files[i])
+            self.recent_file_acts[i].setData(self.recentFiles[i])
             self.recent_file_acts[i].setVisible(True)
 
         for j in range(numRecentFiles, MainWindow.MaxRecentFiles):
@@ -323,40 +331,6 @@ class MainWindow(QMainWindow):
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")
-
-    def read_settings(self):
-        """
-        если сохраняется максимизированным то нужно размеры для возвращения в нормальное состояние менять
-        """
-        self.disabled_plugins=self.settings.value('plugins/disabled', [], 'QStringList')
-        
-        program_options.load_last_opened_database=self.settings.value('load_last_opened_database', False, bool)
-        program_options.last_opened_database=self.settings.value('last_opened_database', '')
-
-        pos = self.settings.value("pos", QPoint(100, 100))
-        size = self.settings.value("size", QSize(800, 400))
-        maximized=self.settings.value("maximized", False,bool)
-        minimized=self.settings.value("minimized", False,bool)
-        if maximized:
-           self.setWindowState(Qt.WindowMaximized)
-        elif minimized:
-           self.setWindowState(Qt.WindowMinimized)
-        else:
-           self.resize(size)
-           self.move(pos)
-
-    def write_settings(self):
-        # General
-        self.settings.setValue("pos", self.pos())
-        self.settings.setValue("size", self.size())
-        self.settings.setValue("maximized", self.windowState() == Qt.WindowMaximized)
-        self.settings.setValue("minimized", self.windowState() == Qt.WindowMinimized)
-        self.settings.setValue('load_last_opened_database', program_options.load_last_opened_database)
-        self.settings.setValue('last_opened_database', program_options.last_opened_database)
-
-        # Plugins
-        self.settings.setValue('plugins/disabled', self.disabled_plugins)
-        
         
 
 if __name__ == '__main__':
