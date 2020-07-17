@@ -347,5 +347,4 @@ class Db(QObject): #QObject а не object для pyqtSignal
                 line='WP'+line.replace('+','S')
                 self.WinCategoriesPrizesArray.append(line)
             pass
-
-   
+  
